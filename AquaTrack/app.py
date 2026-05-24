@@ -155,7 +155,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Build database structural maps tables safely
     if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    # This opens the door for public internet traffic to view your app safely
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+        with app.app_context():
+            db.create_all()
+        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
