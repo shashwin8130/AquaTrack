@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaTrack Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full font-sans antialiased bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+
+    <!-- Navigation Header -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">💧</span>
+                <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-sky-400 bg-clip-text text-transparent">AquaTrack</span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <span class="text-sm text-slate-400">Welcome, <strong class="text-slate-200">{{ username }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="text-sm font-medium text-rose-400 hover:text-rose-300 transition-colors bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Alerts Notifications Block -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-xl border {% if category == 'error' %}bg-rose-500/10 border-rose-500/20 text-rose-300{% else %}bg-emerald-500/10 border-emerald-500/20 text-emerald-300{% endif %}">
+                  {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Interactive Score Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
+    <div class="flex justify-between items-start">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Consumption</p>
+            <h3 class="text-4xl font-bold mt-2 text-blue-400">{{ total_usage }} <span class="text-lg font-normal text-slate-500">Liters</span></h3>
+        </div>
+        <span class="text-[11px] font-mono px-2 py-1 rounded bg-slate-950 text-slate-400 border border-slate-800">Target: 150L</span>
+    </div>
+    
+    <div class="w-full bg-slate-950 h-2 rounded-full mt-4 overflow-hidden border border-slate-800/50">
+        <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500" style="width: 0%;"></div>
+    </div>
+</div>
+
+<script>
+    // Calculate progress percentage based on a sustainable target limit of 150 Liters
+    const totalUsage = parseFloat("{{ total_usage }}") || 0;
+    const targetLimit = 150;
+    let percentage = (totalUsage / targetLimit) * 100;
+    
+    // Cap the maximum layout container width at 100%
+    if (percentage > 100) percentage = 100;
+    
+    const bar = document.getElementById('progressBar');
+    bar.style.width = percentage + '%';
+    
+    // Dynamically update colors based on resource footprint thresholds
+    if (totalUsage >= 135) {
+        // Red Zone: Dangerous consumption levels
+        bar.className = "h-full bg-gradient-to-r from-rose-500 to-red-600 transition-all duration-500";
+    } else if (totalUsage >= 75) {
+        // Yellow Zone: Approaching sustainability ceiling
+        bar.className = "h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500";
+    }
+</script>            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Eco Score Balance</p>
+                <h3 class="text-4xl font-bold mt-2 text-sky-400">{{ eco_score }}<span class="text-lg font-normal text-slate-500">/100</span></h3>
+            </div>
+            <div class="border rounded-2xl p-6 backdrop-blur-sm flex flex-col justify-between {{ tier_color }}">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80">Conservation Standing</p>
+                <h3 class="text-2xl font-bold mt-2">{{ tier }}</h3>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Data Entry Logging Panel -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 h-fit backdrop-blur-sm">
+                <h2 class="text-lg font-bold mb-4 text-slate-200">Log Water Activity</h2>
+<form action="{{ url_for('log_water') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Volume Consumed (Liters)</label>
+                        <input type="number" step="0.1" id="litersInput" name="liters" required placeholder="e.g. 15.5" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500 transition-colors">
+                        <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                            💡 **Quick Reference:** 1 Bucket ≈ **20L** | 5-Min Shower ≈ **40L** | Tap running ≈ **6L/min**
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Use Case / Activity Category</label>
+                        <select name="activity" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500 transition-colors">
+                            <option value="Drinking / Kitchen">Drinking & Cooking</option>
+                            <option value="Showering / Bathing">Showering & Bathing</option>
+                            <option value="Washing / Cleaning">Laundry & Cleaning</option>
+                            <option value="Gardening / Outdoors">Gardening</option>
+                            <option value="Other">Other Specific Tasks</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 font-medium py-3 rounded-xl transition-all shadow-lg shadow-blue-500/10">Record Setup</button>
+                </form>
+
+                <div class="mt-6 pt-4 border-t border-slate-800/60">
+                    <p class="text-xs font-semibold text-slate-400 mb-2">Quick Add Estimator</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="setVolume(20)" class="text-left text-xs p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800/50 border border-slate-800 text-slate-300 transition-colors">
+                            🪣 **1 Full Bucket** <br><span class="text-slate-500 text-[10px]">Sets box to 20L</span>
+                        </button>
+                        <button type="button" onclick="setVolume(6)" class="text-left text-xs p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800/50 border border-slate-800 text-slate-300 transition-colors">
+                            🚽 **1 Flush** <br><span class="text-slate-500 text-[10px]">Sets box to 6L</span>
+                        </button>
+                        <button type="button" onclick="setVolume(40)" class="text-left text-xs p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800/50 border border-slate-800 text-slate-300 transition-colors">
+                            🚿 **5-Min Shower** <br><span class="text-slate-500 text-[10px]">Sets box to 40L</span>
+                        </button>
+                        <button type="button" onclick="setVolume(1)" class="text-left text-xs p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800/50 border border-slate-800 text-slate-300 transition-colors">
+                            🍼 **1 Big Bottle** <br><span class="text-slate-500 text-[10px]">Sets box to 1L</span>
+                        </button>
+                    </div>
+                </div>
+
+                <script>
+                    function setVolume(liters) {
+                        document.getElementById('litersInput').value = liters;
+                    }
+                </script>
+            </div>
+
+            <!-- Historical Display Log Tracking Engine -->
+            <div class="lg:col-span-2 bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold text-slate-200">Consumption Timeline</h2>
+                        {% if logs %}
+                        <form action="{{ url_for('clear_history') }}" method="POST" onsubmit="return confirm('Are you sure you want to completely delete your tracking history?');">
+                            <button type="submit" class="text-xs font-medium text-rose-400 hover:underline">Clear Entire Database</button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    {% if not logs %}
+                    <div class="text-center py-12 border border-dashed border-slate-800 rounded-xl">
+                        <p class="text-slate-500 text-sm">No modern logging items created yet. Your tracking entries will appear here.</p>
+                    </div>
+                    {% else %}
+                    <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {% for log in logs %}
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-slate-950/60 border border-slate-800/60 hover:border-slate-700 transition-colors">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-200">{{ log.activity }}</p>
+                                <p class="text-xs text-slate-500 mt-0.5">{{ log.timestamp.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-md font-bold text-slate-300">{{ log.liters }} L</span>
+                                <form action="{{ url_for('delete_log', log_id=log.id) }}" method="POST">
+                                    <button type="submit" class="text-slate-600 hover:text-rose-400 transition-colors text-sm">✕</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
